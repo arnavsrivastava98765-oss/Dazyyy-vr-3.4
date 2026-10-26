@@ -3,12 +3,14 @@ const path = require('path');
 const { exec } = require('child_process');
 const { WORKSPACE_DIR, ensureWorkspace } = require('../personality');
 
-// Safe resolve that prevents path traversal outside ~/DazyyyWorkspace
+// Safe resolve that strictly prevents path traversal outside ~/DazyyyWorkspace
 function resolveSafePath(relativePath = '') {
   ensureWorkspace();
-  const cleaned = relativePath.replace(/^(\.\.(\/|\\|$))+/, '');
-  const resolved = path.resolve(WORKSPACE_DIR, cleaned);
-  if (!resolved.toLowerCase().startsWith(WORKSPACE_DIR.toLowerCase())) {
+  const resolved = path.resolve(WORKSPACE_DIR, relativePath);
+  const normalizedTarget = path.normalize(resolved).toLowerCase();
+  const normalizedRoot = path.normalize(WORKSPACE_DIR).toLowerCase();
+
+  if (normalizedTarget !== normalizedRoot && !normalizedTarget.startsWith(normalizedRoot + path.sep)) {
     throw new Error('Access denied: Path traversal outside ~/DazyyyWorkspace is strictly forbidden.');
   }
   return resolved;
