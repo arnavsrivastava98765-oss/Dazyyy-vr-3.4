@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Mic, MicOff, Volume2, VolumeX, Terminal, Trash2, Cpu, Globe, Sparkles } from 'lucide-react';
+import { speakWithFemaleVoice, stopSpeaking } from '../utils/voiceSynthesis';
 
 export default function ChatDrawer({
   messages,
@@ -8,7 +9,8 @@ export default function ChatDrawer({
   onClearMemory,
   agentState,
   onListeningChange,
-  summonTrigger = 0
+  summonTrigger = 0,
+  voiceTrigger = 0
 }) {
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
@@ -25,25 +27,71 @@ export default function ChatDrawer({
   }, [summonTrigger]);
 
   useEffect(() => {
+    if (voiceTrigger > 0) {
+      setTimeout(() => {
+        startVoiceInput();
+      }, 600);
+    }
+  }, [voiceTrigger]);
+
+  useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, toolLogs]);
 
-  // Voice Readback (TTS)
+  // Fluent Feminine Voice Readback (TTS)
   useEffect(() => {
     if (!ttsEnabled || messages.length === 0) return;
     const last = messages[messages.length - 1];
-    if (last.role === 'assistant' && last.isNew && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utter = new SpeechSynthesisUtterance(last.content);
-      utter.rate = 1.05;
-      window.speechSynthesis.speak(utter);
+    if (last.role === 'assistant' && last.isNew) {
+      speakWithFemaleVoice(last.content);
     }
   }, [messages, ttsEnabled]);
+
+  const startVoiceInput = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
+    if (isListening) return;
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        onListeningChange(true);
+      };
+
+      recognition.onresult = event => {
+        const transcript = event.results[0][0].transcript;
+        if (transcript) {
+          onSendMessage(transcript);
+        }
+      };
+
+      recognition.onerror = () => {
+        setIsListening(false);
+        onListeningChange(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+        onListeningChange(false);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (e) {
+      console.warn('Speech recognition error:', e);
+    }
+  };
 
   const toggleVoiceInput = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert('Microphone speech recognition is not supported in this browser window.');
+      alert('Microphone speech recognition is not supported in this environment.');
       return;
     }
 
@@ -54,35 +102,7 @@ export default function ChatDrawer({
       return;
     }
 
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'en-US';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-
-    recognition.onstart = () => {
-      setIsListening(true);
-      onListeningChange(true);
-    };
-
-    recognition.onresult = event => {
-      const transcript = event.results[0][0].transcript;
-      if (transcript) {
-        onSendMessage(transcript);
-      }
-    };
-
-    recognition.onerror = () => {
-      setIsListening(false);
-      onListeningChange(false);
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-      onListeningChange(false);
-    };
-
-    recognitionRef.current = recognition;
-    recognition.start();
+    startVoiceInput();
   };
 
   const handleSubmit = e => {

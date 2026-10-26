@@ -4,14 +4,31 @@ const { startBackendServer } = require('./backend/server');
 
 let mainWindow;
 
-function summonDazyyy() {
-  console.log('[Dazyyy] Summon hotkey triggered! Bringing window to front and focusing...');
+function bringWindowToFront() {
   if (!mainWindow) return;
   if (mainWindow.isMinimized()) mainWindow.restore();
   mainWindow.show();
-  mainWindow.setAlwaysOnTop(true);
+  mainWindow.setAlwaysOnTop(true, 'screen-saver');
+  mainWindow.setVisibleOnAllWorkspaces(true);
   mainWindow.focus();
-  mainWindow.webContents.send('hotkey:summon');
+  mainWindow.moveTop();
+  setTimeout(() => {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.setAlwaysOnTop(true);
+    }
+  }, 250);
+}
+
+function summonVoice() {
+  console.log('[Dazyyy] Voice summon hotkey triggered! Activating microphone mode...');
+  bringWindowToFront();
+  mainWindow.webContents.send('hotkey:summon-voice');
+}
+
+function summonChat() {
+  console.log('[Dazyyy] Chat summon hotkey triggered! Focusing chat input...');
+  bringWindowToFront();
+  mainWindow.webContents.send('hotkey:summon-chat');
 }
 
 async function createWindow() {
@@ -72,11 +89,18 @@ ipcMain.on('window:open-workspace', () => {
 app.whenReady().then(async () => {
   await createWindow();
 
-  // Register Global Keyboard Hotkeys:
-  const hotkeys = ['Alt+D', 'Ctrl+Shift+D', 'Ctrl+Alt+D', 'F9', 'F10'];
-  hotkeys.forEach(key => {
-    const ok = globalShortcut.register(key, summonDazyyy);
-    console.log(`[Dazyyy Hotkey] Register ${key}: ${ok ? 'SUCCESS' : 'FAILED'}`);
+  // Register Voice Hotkeys: Ctrl+D, Alt+V, Ctrl+Shift+V
+  const voiceHotkeys = ['Ctrl+D', 'Alt+V', 'Ctrl+Shift+V'];
+  voiceHotkeys.forEach(key => {
+    const ok = globalShortcut.register(key, summonVoice);
+    console.log(`[Dazyyy Hotkey] Register Voice (${key}): ${ok ? 'SUCCESS' : 'FAILED'}`);
+  });
+
+  // Register Chat Hotkeys: Alt+D, Alt+Space, Ctrl+Shift+D, F9
+  const chatHotkeys = ['Alt+D', 'Alt+Space', 'Ctrl+Shift+D', 'F9'];
+  chatHotkeys.forEach(key => {
+    const ok = globalShortcut.register(key, summonChat);
+    console.log(`[Dazyyy Hotkey] Register Chat (${key}): ${ok ? 'SUCCESS' : 'FAILED'}`);
   });
 });
 

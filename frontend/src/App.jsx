@@ -5,6 +5,7 @@ import AvatarCore from './components/AvatarCore';
 import ChatDrawer from './components/ChatDrawer';
 import SettingsModal from './components/SettingsModal';
 import ApprovalModal from './components/ApprovalModal';
+import { speakWithFemaleVoice } from './utils/voiceSynthesis';
 
 const socket = io('http://localhost:4000');
 
@@ -18,24 +19,41 @@ export default function App() {
   const [approvalRequest, setApprovalRequest] = useState(null);
   const [orbMode, setOrbMode] = useState(false);
   const [summonTrigger, setSummonTrigger] = useState(0);
+  const [voiceTrigger, setVoiceTrigger] = useState(0);
 
   useEffect(() => {
-    if (window.electronAPI?.onSummon) {
-      window.electronAPI.onSummon(() => {
-        setOrbMode(false);
-        const greeting = "Yeah, how can I help you, sir?";
-        if ('speechSynthesis' in window) {
-          window.speechSynthesis.cancel();
-          const utterance = new SpeechSynthesisUtterance(greeting);
-          utterance.rate = 1.05;
-          window.speechSynthesis.speak(utterance);
-        }
-        setMessages(prev => [
-          ...prev,
-          { role: 'assistant', content: greeting, isNew: false }
-        ]);
-        setSummonTrigger(prev => prev + 1);
+    const handleChatSummon = () => {
+      setOrbMode(false);
+      const greeting = "Hey! I'm Dazyyy. How can I assist you with your laptop today?";
+      speakWithFemaleVoice(greeting);
+      setMessages(prev => [
+        ...prev,
+        { role: 'assistant', content: greeting, isNew: false }
+      ]);
+      setSummonTrigger(prev => prev + 1);
+    };
+
+    const handleVoiceSummon = () => {
+      setOrbMode(false);
+      const greeting = "Hey, I'm listening. Go ahead!";
+      speakWithFemaleVoice(greeting, () => {
+        setVoiceTrigger(prev => prev + 1);
       });
+      setMessages(prev => [
+        ...prev,
+        { role: 'assistant', content: greeting, isNew: false }
+      ]);
+      setVoiceTrigger(prev => prev + 1);
+    };
+
+    if (window.electronAPI?.onSummonChat) {
+      window.electronAPI.onSummonChat(handleChatSummon);
+    }
+    if (window.electronAPI?.onSummonVoice) {
+      window.electronAPI.onSummonVoice(handleVoiceSummon);
+    }
+    if (window.electronAPI?.onSummon) {
+      window.electronAPI.onSummon(handleChatSummon);
     }
 
     socket.on('init:state', ({ personality: p, history }) => {
@@ -127,8 +145,8 @@ export default function App() {
           <div className="dazyyy-brand">
             <span className="brand-dot" />
             <span className="brand-title">DAZYYY</span>
-            <span className="brand-version" title="Press F9 anytime on your keyboard to summon Dazyyy">
-              F9 SUMMON
+            <span className="brand-version" title="Ctrl+D: Voice Mode | Alt+D: Chat Mode">
+              Ctrl+D (Voice) • Alt+D (Chat)
             </span>
           </div>
 
@@ -156,7 +174,7 @@ export default function App() {
             </button>
             <button
               onClick={() => window.electronAPI?.minimize()}
-              title="Minimize Window (Press F9 to restore)"
+              title="Minimize Window"
               className="ctrl-btn"
             >
               <Minimize2 style={{ width: 15, height: 15 }} />
@@ -185,6 +203,7 @@ export default function App() {
           agentState={agentState}
           onListeningChange={listening => setAgentState(listening ? 'LISTENING' : 'IDLE')}
           summonTrigger={summonTrigger}
+          voiceTrigger={voiceTrigger}
         />
 
         {/* Settings Modal */}
