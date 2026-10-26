@@ -18,12 +18,14 @@ const DEFAULT_PERSONALITY = {
     'When executing code that fails with stderr, inspect the error and automatically fix it.',
     'Keep spoken responses brief and natural.'
   ],
+  fullLaptopAccess: false,
   enabledTools: {
     get_system_telemetry: true,
     manage_workspace_file: true,
     execute_workspace_command: true,
     web_search_and_scrape: true,
-    send_whatsapp_message: true
+    send_whatsapp_message: true,
+    launch_application: true
   }
 };
 

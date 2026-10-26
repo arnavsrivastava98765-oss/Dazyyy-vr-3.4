@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
-import { Settings, FolderOpen, Minimize2, Power, Minimize, Maximize2 } from 'lucide-react';
+import { Settings, FolderOpen, Minimize2, Power, Minimize, Shield } from 'lucide-react';
 import AvatarCore from './components/AvatarCore';
 import ChatDrawer from './components/ChatDrawer';
 import SettingsModal from './components/SettingsModal';
 import ApprovalModal from './components/ApprovalModal';
+import CopilotPermissionModal from './components/CopilotPermissionModal';
 import { speakWithFemaleVoice } from './utils/voiceSynthesis';
 
 const socket = io('http://localhost:4000');
@@ -16,6 +17,7 @@ export default function App() {
   const [toolLogs, setToolLogs] = useState([]);
   const [personality, setPersonality] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showCopilotModal, setShowCopilotModal] = useState(false);
   const [approvalRequest, setApprovalRequest] = useState(null);
   const [orbMode, setOrbMode] = useState(false);
   const [summonTrigger, setSummonTrigger] = useState(0);
@@ -59,6 +61,9 @@ export default function App() {
     socket.on('init:state', ({ personality: p, history }) => {
       setPersonality(p);
       setMessages(history || []);
+      if (p && !p.fullLaptopAccess) {
+        setShowCopilotModal(true);
+      }
     });
 
     socket.on('agent:state', state => {
@@ -145,7 +150,35 @@ export default function App() {
           <div className="dazyyy-brand">
             <span className="brand-dot" />
             <span className="brand-title">DAZYYY</span>
-            <span className="brand-version" title="Ctrl+D: Voice Mode | Alt+D: Chat Mode">
+            {personality?.fullLaptopAccess ? (
+              <span
+                className="brand-version"
+                style={{
+                  color: 'var(--accent-emerald)',
+                  borderColor: 'rgba(52, 211, 153, 0.4)',
+                  background: 'rgba(52, 211, 153, 0.12)'
+                }}
+                title="Full Copilot laptop privileges active"
+              >
+                COPILOT MODE
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowCopilotModal(true)}
+                className="brand-version"
+                style={{
+                  cursor: 'pointer',
+                  color: 'var(--accent-amber)',
+                  borderColor: 'rgba(245, 158, 11, 0.4)',
+                  background: 'rgba(245, 158, 11, 0.12)'
+                }}
+                title="Click to grant Windows Copilot privileges"
+              >
+                GRANT ACCESS
+              </button>
+            )}
+            <span className="brand-version" title="Ctrl+D / Ctrl+Space: Voice | Alt+D / Alt+Space: Chat">
               Ctrl+D (Voice) • Alt+D (Chat)
             </span>
           </div>
@@ -219,6 +252,16 @@ export default function App() {
         <ApprovalModal
           request={approvalRequest}
           onDecision={handleApprovalDecision}
+        />
+
+        {/* First-Run / On-Demand Copilot Laptop Permission Modal */}
+        <CopilotPermissionModal
+          isOpen={showCopilotModal}
+          onGrant={() => {
+            handleUpdatePersonality({ fullLaptopAccess: true });
+            setShowCopilotModal(false);
+          }}
+          onClose={() => setShowCopilotModal(false)}
         />
       </div>
     </div>

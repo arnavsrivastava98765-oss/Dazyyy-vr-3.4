@@ -14,6 +14,7 @@ const {
 } = require('./tools/fileTool');
 const { webToolSchema, executeWebTool } = require('./tools/webTool');
 const { whatsappToolSchema, executeWhatsappTool } = require('./tools/whatsappTool');
+const { appLauncherSchema, executeAppLauncher } = require('./tools/appLauncherTool');
 
 const OLLAMA_URL = 'http://localhost:11434/api/chat';
 
@@ -25,7 +26,8 @@ const ALL_TOOL_SCHEMAS = [
   fileManageSchema,
   fileExecuteSchema,
   webToolSchema,
-  whatsappToolSchema
+  whatsappToolSchema,
+  appLauncherSchema
 ];
 
 function getActiveToolSchemas() {
@@ -45,13 +47,15 @@ async function dispatchTool(toolName, args) {
       return await executeWebTool(args);
     case 'send_whatsapp_message':
       return await executeWhatsappTool(args);
+    case 'launch_application':
+      return await executeAppLauncher(args);
     default:
       return { status: 'error', message: `Unknown tool: ${toolName}` };
   }
 }
 
 const GREETING_OR_CHITCHAT_REGEX = /^(hi|hello|hey|yo|greetings|good\s+(morning|afternoon|evening|day)|sup|what's\s+up|howdy|dazyyy|who\s+are\s+you|what\s+can\s+you\s+do|test|ping)[.!?\s]*$/i;
-const ACTION_KEYWORDS_REGEX = /(cpu|ram|memory|battery|system|telemetry|process|hardware|file|write|create|read|delete|list|script|run|execute|search|google|scrape|duckduckgo|web|whatsapp|message|text|send)/i;
+const ACTION_KEYWORDS_REGEX = /(cpu|ram|memory|battery|system|telemetry|process|hardware|file|write|create|read|delete|list|script|run|execute|search|google|scrape|duckduckgo|web|whatsapp|message|text|send|open|launch|start|app|notepad|calc|calculator|chrome|browser|vscode|spotify|terminal|settings|taskmanager|desktop|downloads|documents)/i;
 
 function determineToolsForPrompt(userMessage) {
   const trimmed = (userMessage || '').trim();

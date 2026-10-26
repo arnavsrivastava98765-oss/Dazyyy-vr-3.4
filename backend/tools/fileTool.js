@@ -1,11 +1,20 @@
 const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
-const { WORKSPACE_DIR, ensureWorkspace } = require('../personality');
+const { WORKSPACE_DIR, ensureWorkspace, getPersonality } = require('../personality');
 
-// Safe resolve that strictly prevents path traversal outside ~/DazyyyWorkspace
+// Safe resolve: when fullLaptopAccess is granted, supports absolute & home paths; otherwise restricts to ~/DazyyyWorkspace
 function resolveSafePath(relativePath = '') {
   ensureWorkspace();
+  const personality = getPersonality();
+  if (personality && personality.fullLaptopAccess) {
+    if (path.isAbsolute(relativePath)) return relativePath;
+    if (relativePath.startsWith('~')) {
+      return path.join(require('os').homedir(), relativePath.slice(1));
+    }
+    return path.resolve(WORKSPACE_DIR, relativePath);
+  }
+
   const resolved = path.resolve(WORKSPACE_DIR, relativePath);
   const normalizedTarget = path.normalize(resolved).toLowerCase();
   const normalizedRoot = path.normalize(WORKSPACE_DIR).toLowerCase();
