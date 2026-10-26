@@ -65,6 +65,16 @@ function startBackendServer(port = 4000) {
       });
     });
 
+    server.on('error', err => {
+      if (err.code === 'EADDRINUSE') {
+        console.log(`[Dazyyy Backend] Port ${port} already in use. Reusing existing instance.`);
+        resolve(server);
+      } else {
+        console.error(`[Dazyyy Backend] Server error:`, err);
+        resolve(null);
+      }
+    });
+
     server.listen(port, () => {
       console.log(`[Dazyyy Backend] Listening on http://localhost:${port}`);
       resolve(server);

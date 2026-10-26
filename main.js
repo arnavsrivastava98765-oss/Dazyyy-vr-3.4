@@ -5,10 +5,11 @@ const { startBackendServer } = require('./backend/server');
 let mainWindow;
 
 function summonDazyyy() {
+  console.log('[Dazyyy] Hotkey triggered! Bringing window to front...');
   if (!mainWindow) return;
   if (mainWindow.isMinimized()) mainWindow.restore();
   mainWindow.show();
-  mainWindow.setAlwaysOnTop(true);
+  mainWindow.setAlwaysOnTop(true, 'screen-saver');
   mainWindow.focus();
   mainWindow.webContents.send('hotkey:summon');
 }
@@ -25,6 +26,7 @@ async function createWindow() {
     alwaysOnTop: true,
     resizable: false,
     hasShadow: true,
+    show: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -32,12 +34,17 @@ async function createWindow() {
     },
   });
 
+  mainWindow.center();
+
   const devUrl = 'http://localhost:5173';
   try {
     await mainWindow.loadURL(devUrl);
   } catch (err) {
     await mainWindow.loadFile(path.join(__dirname, 'dist/index.html'));
   }
+
+  mainWindow.show();
+  mainWindow.focus();
 }
 
 ipcMain.on('window:minimize', () => {
@@ -57,10 +64,12 @@ ipcMain.on('window:open-workspace', () => {
 app.whenReady().then(async () => {
   await createWindow();
 
-  // Register Global Keyboard Hotkeys: Alt+D, Ctrl+Shift+D, and Ctrl+Space
-  globalShortcut.register('Alt+D', summonDazyyy);
-  globalShortcut.register('CommandOrControl+Shift+D', summonDazyyy);
-  globalShortcut.register('CommandOrControl+Space', summonDazyyy);
+  // Register Global Keyboard Hotkeys:
+  const hotkeys = ['Alt+D', 'Ctrl+Shift+D', 'Ctrl+Alt+D', 'F9', 'F10'];
+  hotkeys.forEach(key => {
+    const ok = globalShortcut.register(key, summonDazyyy);
+    console.log(`[Dazyyy Hotkey] Register ${key}: ${ok ? 'SUCCESS' : 'FAILED'}`);
+  });
 });
 
 app.on('will-quit', () => {
