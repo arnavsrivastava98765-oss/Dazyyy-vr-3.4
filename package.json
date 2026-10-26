@@ -8,7 +8,29 @@
     "dev:electron": "wait-on http://localhost:5173 && electron .",
     "start": "concurrently -k \"npm run dev:vite\" \"npm run dev:electron\"",
     "build": "vite build",
+    "build:app": "vite build && electron-builder --win --dir",
+    "package:installer": "vite build && electron-builder --win nsis",
     "test": "node tests/comprehensive-test.js"
+  },
+  "build": {
+    "appId": "com.dazyyy.desktop",
+    "productName": "Dazyyy",
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "backend/**/*",
+      "main.js",
+      "preload.js",
+      "package.json"
+    ]
   },
   "dependencies": {
     "cheerio": "^1.0.0-rc.12",
@@ -26,6 +48,7 @@
     "@vitejs/plugin-react": "^4.3.1",
     "concurrently": "^8.2.2",
     "electron": "^31.2.0",
+    "electron-builder": "^26.18.0",
     "tailwindcss": "^3.4.4",
     "vite": "^5.3.3",
     "wait-on": "^7.2.0"

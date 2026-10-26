@@ -19,13 +19,15 @@ async function createWindow() {
   await startBackendServer(4000);
 
   mainWindow = new BrowserWindow({
-    width: 420,
-    height: 600,
-    transparent: true,
+    width: 440,
+    height: 640,
+    backgroundColor: '#0a0f1d',
     frame: false,
     alwaysOnTop: true,
-    resizable: false,
+    resizable: true,
     hasShadow: true,
+    autoHideMenuBar: true,
+    title: 'Dazyyy AI Companion',
     show: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -36,11 +38,15 @@ async function createWindow() {
 
   mainWindow.center();
 
-  const devUrl = 'http://localhost:5173';
-  try {
-    await mainWindow.loadURL(devUrl);
-  } catch (err) {
+  if (app.isPackaged) {
     await mainWindow.loadFile(path.join(__dirname, 'dist/index.html'));
+  } else {
+    const devUrl = 'http://localhost:5173';
+    try {
+      await mainWindow.loadURL(devUrl);
+    } catch (err) {
+      await mainWindow.loadFile(path.join(__dirname, 'dist/index.html'));
+    }
   }
 
   mainWindow.show();
