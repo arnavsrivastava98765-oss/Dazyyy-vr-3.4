@@ -17,8 +17,27 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [approvalRequest, setApprovalRequest] = useState(null);
   const [orbMode, setOrbMode] = useState(false);
+  const [summonTrigger, setSummonTrigger] = useState(0);
 
   useEffect(() => {
+    if (window.electronAPI?.onSummon) {
+      window.electronAPI.onSummon(() => {
+        setOrbMode(false);
+        const greeting = "Yeah, how can I help you, sir?";
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(greeting);
+          utterance.rate = 1.05;
+          window.speechSynthesis.speak(utterance);
+        }
+        setMessages(prev => [
+          ...prev,
+          { role: 'assistant', content: greeting, isNew: false }
+        ]);
+        setSummonTrigger(prev => prev + 1);
+      });
+    }
+
     socket.on('init:state', ({ personality: p, history }) => {
       setPersonality(p);
       setMessages(history || []);
@@ -164,6 +183,7 @@ export default function App() {
           onClearMemory={handleClearMemory}
           agentState={agentState}
           onListeningChange={listening => setAgentState(listening ? 'LISTENING' : 'IDLE')}
+          summonTrigger={summonTrigger}
         />
 
         {/* Settings Modal */}

@@ -1,8 +1,17 @@
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, globalShortcut } = require('electron');
 const path = require('path');
 const { startBackendServer } = require('./backend/server');
 
 let mainWindow;
+
+function summonDazyyy() {
+  if (!mainWindow) return;
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.show();
+  mainWindow.setAlwaysOnTop(true);
+  mainWindow.focus();
+  mainWindow.webContents.send('hotkey:summon');
+}
 
 async function createWindow() {
   // Boot the Express + Socket.io backend on port 4000
@@ -45,7 +54,18 @@ ipcMain.on('window:open-workspace', () => {
   shell.openPath(workspaceDir);
 });
 
-app.whenReady().then(createWindow);
+app.whenReady().then(async () => {
+  await createWindow();
+
+  // Register Global Keyboard Hotkeys: Alt+D, Ctrl+Shift+D, and Ctrl+Space
+  globalShortcut.register('Alt+D', summonDazyyy);
+  globalShortcut.register('CommandOrControl+Shift+D', summonDazyyy);
+  globalShortcut.register('CommandOrControl+Space', summonDazyyy);
+});
+
+app.on('will-quit', () => {
+  globalShortcut.unregisterAll();
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();

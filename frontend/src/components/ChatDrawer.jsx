@@ -7,7 +7,8 @@ export default function ChatDrawer({
   onSendMessage,
   onClearMemory,
   agentState,
-  onListeningChange
+  onListeningChange,
+  summonTrigger = 0
 }) {
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
@@ -15,6 +16,13 @@ export default function ChatDrawer({
   const [showLogs, setShowLogs] = useState(false);
   const bottomRef = useRef(null);
   const recognitionRef = useRef(null);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (summonTrigger > 0) {
+      inputRef.current?.focus();
+    }
+  }, [summonTrigger]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -187,6 +195,7 @@ export default function ChatDrawer({
         </button>
 
         <input
+          ref={inputRef}
           type="text"
           value={input}
           onChange={e => setInput(e.target.value)}
