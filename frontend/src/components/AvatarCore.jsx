@@ -3,121 +3,124 @@ import React from 'react';
 const STATE_CONFIG = {
   IDLE: {
     color: '#38bdf8',
-    secondary: '#0284c7',
+    glow: 'rgba(56, 189, 248, 0.4)',
     label: 'STANDBY // ONLINE',
-    pulseSpeed: '3s'
+    speed: '4s'
   },
   LISTENING: {
     color: '#34d399',
-    secondary: '#059669',
-    label: 'VOICE INPUT ACTIVE',
-    pulseSpeed: '1.1s'
+    glow: 'rgba(52, 211, 153, 0.5)',
+    label: 'VOICE ACTIVE',
+    speed: '1.2s'
   },
   THINKING: {
     color: '#a855f7',
-    secondary: '#7e22ce',
-    label: 'NEURAL REASONING...',
-    pulseSpeed: '0.8s'
+    glow: 'rgba(168, 85, 247, 0.6)',
+    label: 'NEURAL REASONING',
+    speed: '1s'
   },
   WORKING: {
     color: '#f59e0b',
-    secondary: '#d97706',
-    label: 'EXECUTING LOCAL TOOL',
-    pulseSpeed: '0.6s'
+    glow: 'rgba(245, 158, 11, 0.6)',
+    label: 'EXECUTING TASK',
+    speed: '0.8s'
   },
   SUCCESS: {
     color: '#22c55e',
-    secondary: '#15803d',
-    label: 'TASK COMPLETE',
-    pulseSpeed: '1.5s'
+    glow: 'rgba(34, 197, 94, 0.5)',
+    label: 'TASK COMPLETED',
+    speed: '2s'
   }
 };
 
 export default function AvatarCore({ state = 'IDLE', statusText = '', compact = false }) {
   const cfg = STATE_CONFIG[state] || STATE_CONFIG.IDLE;
+  const size = compact ? 64 : 96;
 
   return (
-    <div className="flex flex-col items-center justify-center relative">
-      <div className={`relative flex items-center justify-center ${compact ? 'w-20 h-20' : 'w-28 h-28'}`}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
+      <div style={{ position: 'relative', width: size, height: size, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {/* Ambient Glow */}
         <div
-          className="absolute inset-0 rounded-full blur-xl opacity-40 transition-all duration-500"
-          style={{ backgroundColor: cfg.color }}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            borderRadius: '50%',
+            filter: 'blur(20px)',
+            opacity: 0.6,
+            backgroundColor: cfg.color,
+            transition: 'all 0.5s ease'
+          }}
         />
 
-        {/* Reactive SVG Shader Core */}
-        <svg className="w-full h-full" viewBox="0 0 120 120">
+        {/* Minimalist Shader Canvas */}
+        <svg width={size} height={size} viewBox="0 0 100 100" style={{ zIndex: 1 }}>
           <defs>
-            <radialGradient id="dazyyyCoreGrad" cx="50%" cy="50%" r="50%">
+            <radialGradient id="avatarCoreGradient" cx="50%" cy="50%" r="50%">
               <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
-              <stop offset="45%" stopColor={cfg.color} stopOpacity="0.85" />
-              <stop offset="100%" stopColor={cfg.secondary} stopOpacity="0.1" />
+              <stop offset="50%" stopColor={cfg.color} stopOpacity="0.8" />
+              <stop offset="100%" stopColor={cfg.color} stopOpacity="0.1" />
             </radialGradient>
           </defs>
 
-          {/* Outer Rotating Cyber Ring */}
+          {/* Outer Breathing Ring */}
           <circle
-            cx="60"
-            cy="60"
-            r="52"
+            cx="50"
+            cy="50"
+            r="44"
             fill="none"
             stroke={cfg.color}
             strokeWidth="1.5"
-            strokeDasharray="18 10 6 10"
-            strokeOpacity="0.65"
+            strokeDasharray="16 8 4 8"
+            strokeOpacity="0.7"
           >
             <animateTransform
               attributeName="transform"
               type="rotate"
-              from="0 60 60"
-              to="360 60 60"
-              dur={state === 'THINKING' || state === 'WORKING' ? '3s' : '10s'}
+              from="0 50 50"
+              to="360 50 50"
+              dur={state === 'THINKING' || state === 'WORKING' ? '3s' : '12s'}
               repeatCount="indefinite"
             />
           </circle>
 
-          {/* Counter-Rotating Inner Ring */}
+          {/* Inner Counter-Rotating Ring */}
           <circle
-            cx="60"
-            cy="60"
-            r="42"
+            cx="50"
+            cy="50"
+            r="35"
             fill="none"
             stroke={cfg.color}
-            strokeWidth="2"
-            strokeDasharray="30 18"
+            strokeWidth="1.8"
+            strokeDasharray="24 14"
             strokeOpacity="0.85"
           >
             <animateTransform
               attributeName="transform"
               type="rotate"
-              from="360 60 60"
-              to="0 60 60"
-              dur={state === 'THINKING' || state === 'WORKING' ? '2s' : '7s'}
+              from="360 50 50"
+              to="0 50 50"
+              dur={state === 'THINKING' || state === 'WORKING' ? '2s' : '8s'}
               repeatCount="indefinite"
             />
           </circle>
 
           {/* Pulsing Energy Core */}
-          <circle cx="60" cy="60" r="26" fill="url(#dazyyyCoreGrad)">
+          <circle cx="50" cy="50" r="22" fill="url(#avatarCoreGradient)">
             <animate
               attributeName="r"
-              values="23;29;23"
-              dur={cfg.pulseSpeed}
+              values="19;24;19"
+              dur={cfg.speed}
               repeatCount="indefinite"
             />
           </circle>
         </svg>
       </div>
 
-      {/* State Badge */}
-      <div className="mt-1 flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-900/80 border border-slate-700/70">
-        <span
-          className="w-2 h-2 rounded-full animate-ping"
-          style={{ backgroundColor: cfg.color }}
-        />
-        <span className="text-[10px] font-mono tracking-widest uppercase text-slate-300">
-          {statusText || cfg.label}
-        </span>
+      {/* Modern Status Badge */}
+      <div className="status-pill">
+        <span className="status-indicator" style={{ backgroundColor: cfg.color, boxShadow: `0 0 8px ${cfg.color}` }} />
+        <span className="status-text">{statusText || cfg.label}</span>
       </div>
     </div>
   );

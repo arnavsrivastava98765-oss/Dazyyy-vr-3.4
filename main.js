@@ -5,11 +5,11 @@ const { startBackendServer } = require('./backend/server');
 let mainWindow;
 
 function summonDazyyy() {
-  console.log('[Dazyyy] Hotkey triggered! Bringing window to front...');
+  console.log('[Dazyyy] Summon hotkey triggered! Bringing window to front and focusing...');
   if (!mainWindow) return;
   if (mainWindow.isMinimized()) mainWindow.restore();
   mainWindow.show();
-  mainWindow.setAlwaysOnTop(true, 'screen-saver');
+  mainWindow.setAlwaysOnTop(true);
   mainWindow.focus();
   mainWindow.webContents.send('hotkey:summon');
 }
@@ -19,9 +19,11 @@ async function createWindow() {
   await startBackendServer(4000);
 
   mainWindow = new BrowserWindow({
-    width: 440,
-    height: 640,
-    backgroundColor: '#0a0f1d',
+    width: 480,
+    height: 680,
+    minWidth: 400,
+    minHeight: 580,
+    backgroundColor: '#07090e',
     frame: false,
     alwaysOnTop: true,
     resizable: true,

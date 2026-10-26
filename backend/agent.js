@@ -50,6 +50,23 @@ async function dispatchTool(toolName, args) {
   }
 }
 
+const GREETING_OR_CHITCHAT_REGEX = /^(hi|hello|hey|yo|greetings|good\s+(morning|afternoon|evening|day)|sup|what's\s+up|howdy|dazyyy|who\s+are\s+you|what\s+can\s+you\s+do|test|ping)[.!?\s]*$/i;
+const ACTION_KEYWORDS_REGEX = /(cpu|ram|memory|battery|system|telemetry|process|hardware|file|write|create|read|delete|list|script|run|execute|search|google|scrape|duckduckgo|web|whatsapp|message|text|send)/i;
+
+function determineToolsForPrompt(userMessage) {
+  const trimmed = (userMessage || '').trim();
+  // If user is greeting or having casual conversation, do not pass tools so model talks naturally like ChatGPT
+  if (GREETING_OR_CHITCHAT_REGEX.test(trimmed)) {
+    return [];
+  }
+  // Only pass tools if the prompt mentions an action keyword
+  if (ACTION_KEYWORDS_REGEX.test(trimmed)) {
+    return getActiveToolSchemas();
+  }
+  // Default to pure conversational mode for general knowledge questions
+  return [];
+}
+
 async function runAgentTurn({ userMessage, socket, requestHumanApproval }) {
   const personality = getPersonality();
   const model = personality.model || 'llama3.1';
@@ -57,6 +74,8 @@ async function runAgentTurn({ userMessage, socket, requestHumanApproval }) {
 
   history.push({ role: 'user', content: userMessage });
   socket.emit('agent:state', 'THINKING');
+
+  const toolsForTurn = determineToolsForPrompt(userMessage);
 
   const MAX_ITERATIONS = 6;
   let iteration = 0;
@@ -70,9 +89,13 @@ async function runAgentTurn({ userMessage, socket, requestHumanApproval }) {
       messages: [
         { role: 'system', content: buildSystemPrompt() },
         ...history
-      ],
-      tools: getActiveToolSchemas()
+      ]
     };
+
+    // Only inject tools if the prompt genuinely requested actions
+    if (toolsForTurn.length > 0) {
+      payload.tools = toolsForTurn;
+    }
 
     let responseData;
     try {
@@ -116,6 +139,19 @@ async function runAgentTurn({ userMessage, socket, requestHumanApproval }) {
       const toolName = call.function.name;
       const rawArgs = call.function.arguments || {};
       const parsedArgs = typeof rawArgs === 'string' ? JSON.parse(rawArgs) : rawArgs;
+
+      // Safety check: Prevent unprompted WhatsApp calls if user never requested it
+      if (toolName === 'send_whatsapp_message' && !/(whatsapp|message|text)/i.test(userMessage)) {
+        console.log('[Dazyyy Guard] Blocked unprompted WhatsApp tool call.');
+        history.push({
+          role: 'tool',
+          content: JSON.stringify({
+            status: 'ignored',
+            message: 'WhatsApp tool was not requested by user. Please answer conversationally.'
+          })
+        });
+        continue;
+      }
 
       // Human-in-the-loop gate for sensitive tools
       if (SENSITIVE_TOOLS.has(toolName)) {

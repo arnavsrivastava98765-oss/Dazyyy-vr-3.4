@@ -107,11 +107,11 @@ export default function App() {
   // Compact Floating Orb Mode
   if (orbMode) {
     return (
-      <div className="w-screen h-screen flex items-center justify-center drag-region">
+      <div className="floating-orb-container drag-region">
         <div
           onClick={() => setOrbMode(false)}
-          className="cursor-pointer no-drag p-3 rounded-full bg-slate-950/85 border border-sky-500/40 shadow-2xl hover:scale-105 transition"
-          title="Click to Expand Dazyyy HUD"
+          className="floating-orb-btn no-drag"
+          title="Click to Expand Dazyyy HUD (or press F9)"
         >
           <AvatarCore state={agentState} statusText={statusText} compact />
         </div>
@@ -120,58 +120,59 @@ export default function App() {
   }
 
   return (
-    <div className="w-screen h-screen p-2 flex flex-col">
-      <div className="flex-1 flex flex-col rounded-3xl bg-slate-950/90 backdrop-blur-xl border border-slate-800/90 shadow-2xl overflow-hidden relative">
+    <div style={{ width: '100vw', height: '100vh', padding: '6px' }}>
+      <div className="dazyyy-shell">
         {/* Draggable Top Titlebar */}
-        <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-800/80 drag-region">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-sky-400 shadow-[0_0_8px_#38bdf8]" />
-            <span className="text-xs font-bold tracking-widest uppercase text-slate-100">
-              DAZYYY // OS
+        <div className="dazyyy-header drag-region">
+          <div className="dazyyy-brand">
+            <span className="brand-dot" />
+            <span className="brand-title">DAZYYY</span>
+            <span className="brand-version" title="Press F9 anytime on your keyboard to summon Dazyyy">
+              F9 SUMMON
             </span>
           </div>
 
-          <div className="flex items-center gap-1 no-drag">
+          <div className="window-controls no-drag">
             <button
               onClick={() => window.electronAPI?.openWorkspace()}
               title="Open ~/DazyyyWorkspace"
-              className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-sky-300"
+              className="ctrl-btn"
             >
-              <FolderOpen className="w-3.5 h-3.5" />
+              <FolderOpen style={{ width: 15, height: 15 }} />
             </button>
             <button
               onClick={() => setShowSettings(true)}
-              title="Personality & Tool Settings"
-              className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-sky-300"
+              title="Neural Settings & Tool Permissions"
+              className="ctrl-btn"
             >
-              <Settings className="w-3.5 h-3.5" />
+              <Settings style={{ width: 15, height: 15 }} />
             </button>
             <button
               onClick={() => setOrbMode(true)}
-              title="Collapse to Floating Orb"
-              className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-sky-300"
+              title="Collapse to Minimal Floating Orb"
+              className="ctrl-btn"
             >
-              <Minimize className="w-3.5 h-3.5" />
+              <Minimize style={{ width: 15, height: 15 }} />
             </button>
             <button
               onClick={() => window.electronAPI?.minimize()}
-              title="Minimize Window"
-              className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400"
+              title="Minimize Window (Press F9 to restore)"
+              className="ctrl-btn"
             >
-              <Minimize2 className="w-3.5 h-3.5" />
+              <Minimize2 style={{ width: 15, height: 15 }} />
             </button>
             <button
               onClick={() => window.electronAPI?.close()}
               title="Quit Dazyyy"
-              className="p-1.5 rounded-lg hover:bg-rose-500/20 text-slate-400 hover:text-rose-400"
+              className="ctrl-btn btn-close"
             >
-              <Power className="w-3.5 h-3.5" />
+              <Power style={{ width: 15, height: 15 }} />
             </button>
           </div>
         </div>
 
-        {/* Reactive Avatar Header */}
-        <div className="py-3 flex flex-col items-center justify-center border-b border-slate-900 drag-region">
+        {/* Reactive Avatar Core */}
+        <div className="avatar-section drag-region">
           <AvatarCore state={agentState} statusText={statusText} />
         </div>
 
